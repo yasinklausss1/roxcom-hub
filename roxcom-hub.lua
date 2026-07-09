@@ -1,0 +1,741 @@
+loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+
+local Window = Rayfield:CreateWindow({
+   Name = "ROXCOM Hub",
+   LoadingTitle = "Welcome to ROXCOM Hub",
+   LoadingSubtitle = "ROXCOM Script execution",
+   ConfigurationSaving = { Enabled = false },
+   KeySystem = false
+})
+
+-- Вкладка: LocalPlayer
+local PlayerTab = Window:CreateTab("LocalPlayer", 4483362458)
+
+PlayerTab:CreateSection("Movement")
+
+PlayerTab:CreateSlider({
+   Name = "WalkSpeed",
+   Range = {16, 500},
+   Increment = 1,
+   Suffix = " Spd",
+   CurrentValue = 16,
+   Callback = function(Value)
+      game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = Value
+   end,
+})
+
+PlayerTab:CreateSlider({
+   Name = "JumpPower",
+   Range = {50, 500},
+   Increment = 1,
+   Suffix = " Pwr",
+   CurrentValue = 50,
+   Callback = function(Value)
+      game.Players.LocalPlayer.Character.Humanoid.UseJumpPower = true
+      game.Players.LocalPlayer.Character.Humanoid.JumpPower = Value
+   end,
+})
+
+PlayerTab:CreateSlider({
+   Name = "Gravity",
+   Range = {0, 196},
+   Increment = 1,
+   Suffix = " G",
+   CurrentValue = 196,
+   Callback = function(Value)
+      workspace.Gravity = Value
+   end,
+})
+
+local InfJumpEnabled = false
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if InfJumpEnabled then
+        game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+    end
+end)
+
+PlayerTab:CreateToggle({
+   Name = "Infinite Jump",
+   CurrentValue = false,
+   Flag = "InfJump",
+   Callback = function(Value) InfJumpEnabled = Value end,
+})
+
+local Noclip = false
+game:GetService("RunService").Stepped:Connect(function()
+    if Noclip and game.Players.LocalPlayer.Character then
+        for _, v in pairs(game.Players.LocalPlayer.Character:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+    end
+end)
+
+PlayerTab:CreateToggle({
+   Name = "Noclip",
+   CurrentValue = false,
+   Flag = "Noclip",
+   Callback = function(Value) Noclip = Value end,
+})
+
+PlayerTab:CreateSection("Combat Mods")
+
+-- Улучшенная Kill Aura (0-500)
+local KillAuraEnabled = false
+local KillAuraRange = 20
+
+task.spawn(function()
+    while task.wait(0.1) do
+        if KillAuraEnabled then
+            local player = game.Players.LocalPlayer
+            local character = player.Character
+            if not character or not character:FindFirstChild("HumanoidRootPart") then continue end
+            local rootPart = character.HumanoidRootPart
+            
+            for _, v in pairs(game.Players:GetPlayers()) do
+                if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") and v.Character:FindFirstChild("Humanoid") and v.Character.Humanoid.Health > 0 then
+                    local distance = (rootPart.Position - v.Character.HumanoidRootPart.Position).Magnitude
+                    if distance <= KillAuraRange then
+                        -- Пытаемся использовать любой инструмент для атаки
+                        local tool = character:FindFirstChildOfClass("Tool")
+                        if tool then
+                            tool:Activate()
+                        else
+                            -- Если нет инструмента, пытаемся использовать стандартную атаку (если есть)
+                            local humanoid = character:FindFirstChildOfClass("Humanoid")
+                            if humanoid then
+                                humanoid:MoveTo(v.Character.HumanoidRootPart.Position)
+                                humanoid:Move(v.Character.HumanoidRootPart.Position - rootPart.Position, false)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+PlayerTab:CreateToggle({
+   Name = "Kill Aura",
+   CurrentValue = false,
+   Flag = "KillAuraToggle",
+   Callback = function(Value) KillAuraEnabled = Value end,
+})
+
+PlayerTab:CreateSlider({
+   Name = "Kill Aura Range",
+   Range = {0, 500},  -- Изменено с 5-50 на 0-500
+   Increment = 1,
+   Suffix = " Studs",
+   CurrentValue = 20,
+   Flag = "KillAuraRange",
+   Callback = function(Value) KillAuraRange = Value end,
+})
+
+-- Улучшенный Hitbox Expander (0-500)
+local HitboxEnabled = false
+local HitboxSize = 2
+
+-- Функция для сброса хитбоксов
+local function resetHitboxes()
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = v.Character.HumanoidRootPart
+            hrp.Size = Vector3.new(2, 2, 1)
+            hrp.Transparency = 1
+            hrp.BrickColor = BrickColor.new("Medium stone grey")
+            hrp.Material = Enum.Material.Plastic
+            hrp.CanCollide = true
+        end
+    end
+end
+
+-- Функция для применения хитбоксов
+local function applyHitboxes()
+    if not HitboxEnabled then return end
+    
+    for _, v in pairs(game.Players:GetPlayers()) do
+        if v ~= game.Players.LocalPlayer and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = v.Character.HumanoidRootPart
+            -- Применяем размер от 0 до 500
+            hrp.Size = Vector3.new(HitboxSize, HitboxSize, HitboxSize)
+            hrp.Transparency = 0.7
+            hrp.BrickColor = BrickColor.new("Really red")
+            hrp.Material = Enum.Material.Neon
+            hrp.CanCollide = false
+        end
+    end
+end
+
+-- Основной цикл для хитбоксов
+task.spawn(function()
+    while task.wait(0.5) do
+        if HitboxEnabled then
+            applyHitboxes()
+        end
+    end
+end)
+
+PlayerTab:CreateToggle({
+   Name = "Hitbox Expander",
+   CurrentValue = false,
+   Flag = "HitboxToggle",
+   Callback = function(Value)
+      HitboxEnabled = Value
+      if not Value then
+         resetHitboxes()
+      else
+         applyHitboxes()
+      end
+   end,
+})
+
+PlayerTab:CreateSlider({
+   Name = "Hitbox Size",
+   Range = {0, 500},  -- Изменено с 2-50 на 0-500
+   Increment = 1,
+   Suffix = " Studs",
+   CurrentValue = 2,
+   Flag = "HitboxSize",
+   Callback = function(Value) 
+      HitboxSize = Value
+      if HitboxEnabled then
+         applyHitboxes()
+      end
+   end,
+})
+
+-- Обработка новых игроков для хитбоксов
+game.Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        task.wait(1) -- Ждем загрузки персонажа
+        if HitboxEnabled and player ~= game.Players.LocalPlayer then
+            task.wait(0.5) -- Дополнительная задержка для стабильности
+            applyHitboxes()
+        end
+    end)
+end)
+
+PlayerTab:CreateSection("Tools")
+
+PlayerTab:CreateButton({
+   Name = "Click Teleport",
+   Callback = function()
+      local mouse = game.Players.LocalPlayer:GetMouse()
+      local tool = Instance.new("Tool")
+      tool.RequiresHandle = false
+      tool.Name = "Click Teleport"
+      tool.Activated:Connect(function()
+         local pos = mouse.Hit.p + Vector3.new(0, 3, 0)
+         game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = CFrame.new(pos)
+      end)
+      tool.Parent = game.Players.LocalPlayer.Backpack
+      Rayfield:Notify({Title = "Teleport", Content = "Tool added to inventory", Duration = 3})
+   end,
+})
+
+local Flying = false
+local FlySpeed = 50
+local BodyGyro = nil
+local BodyVelocity = nil
+
+PlayerTab:CreateToggle({
+   Name = "Fly",
+   CurrentValue = false,
+   Flag = "FlyToggle",
+   Callback = function(Value)
+      Flying = Value
+      local lp = game.Players.LocalPlayer
+      local char = lp.Character or lp.CharacterAdded:Wait()
+      local hrp = char:WaitForChild("HumanoidRootPart")
+      local hum = char:WaitForChild("Humanoid")
+      local cam = workspace.CurrentCamera
+
+      if Flying then
+         BodyGyro = Instance.new("BodyGyro", hrp)
+         BodyVelocity = Instance.new("BodyVelocity", hrp)
+         BodyGyro.P = 9e4
+         BodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+         BodyGyro.cframe = hrp.CFrame
+         BodyVelocity.velocity = Vector3.new(0, 0, 0)
+         BodyVelocity.maxForce = Vector3.new(9e9, 9e9, 9e9)
+         hum.PlatformStand = true
+         
+         task.spawn(function()
+            while Flying do
+               BodyVelocity.velocity = cam.CFrame.LookVector * (FlySpeed * (hum.MoveDirection.Magnitude > 0 and 1 or 0))
+               BodyGyro.cframe = cam.CFrame
+               task.wait()
+            end
+            if BodyGyro then BodyGyro:Destroy() end
+            if BodyVelocity then BodyVelocity:Destroy() end
+            hum.PlatformStand = false
+         end)
+      else
+         if BodyGyro then BodyGyro:Destroy() end
+         if BodyVelocity then BodyVelocity:Destroy() end
+         hum.PlatformStand = false
+      end
+   end,
+})
+
+PlayerTab:CreateSlider({
+   Name = "Fly Speed",
+   Range = {10, 500},
+   Increment = 1,
+   Suffix = " Speed",
+   CurrentValue = 50,
+   Flag = "FlySpeed",
+   Callback = function(Value) FlySpeed = Value end,
+})
+
+PlayerTab:CreateToggle({
+   Name = "Anti-AFK",
+   CurrentValue = false,
+   Flag = "AntiAFK",
+   Callback = function(Value)
+      _G.AntiAFK = Value
+      local lp = game.Players.LocalPlayer
+      local char = lp.Character or lp.CharacterAdded:Wait()
+      local hrp = char:WaitForChild("HumanoidRootPart")
+      local hum = char:WaitForChild("Humanoid")
+      if _G.AntiAFK then
+         local Plate = Instance.new("Part", workspace)
+         Plate.Name = "AFK_Platform"
+         Plate.Size = Vector3.new(15, 1, 15)
+         Plate.Position = hrp.Position + Vector3.new(0, 10000, 0)
+         Plate.Anchored = true
+         Plate.BrickColor = BrickColor.new("White")
+         Plate.Material = Enum.Material.Neon
+         hrp.CFrame = Plate.CFrame + Vector3.new(0, 3, 0)
+         task.spawn(function()
+            while _G.AntiAFK do
+               hum:MoveTo(Plate.Position + Vector3.new(math.random(-6, 6), 0, math.random(-6, 6)))
+               if hum.FloorMaterial ~= Enum.Material.Air then hum:ChangeState("Jumping") end
+               if (hrp.Position - Plate.Position).Magnitude > 12 then hrp.CFrame = Plate.CFrame + Vector3.new(0, 3, 0) end
+               task.wait(1.2)
+            end
+            if workspace:FindFirstChild("AFK_Platform") then workspace.AFK_Platform:Destroy() end
+         end)
+      else
+         if workspace:FindFirstChild("AFK_Platform") then workspace.AFK_Platform:Destroy() end
+      end
+   end,
+})
+
+-- Вкладка: Visuals
+local VisualsTab = Window:CreateTab("Visuals", 4483362458)
+
+VisualsTab:CreateToggle({
+   Name = "X-Ray",
+   CurrentValue = false,
+   Flag = "XRayToggle",
+   Callback = function(Value)
+      for _, v in pairs(workspace:GetDescendants()) do
+         if v:IsA("BasePart") and not v.Parent:FindFirstChild("Humanoid") then
+            if not v:FindFirstChild("OriginalTransparency") then
+               local ot = Instance.new("NumberValue", v)
+               ot.Name = "OriginalTransparency"
+               ot.Value = v.Transparency
+            end
+            v.Transparency = Value and 0.5 or v.OriginalTransparency.Value
+         end
+      end
+   end,
+})
+
+local EspActive = false
+VisualsTab:CreateToggle({
+   Name = "Player ESP",
+   CurrentValue = false,
+   Flag = "ESPToggle",
+   Callback = function(Value)
+      EspActive = Value
+      if EspActive then
+         task.spawn(function()
+            while EspActive do
+               for _, v in pairs(game.Players:GetPlayers()) do
+                  if v ~= game.Players.LocalPlayer and v.Character and not v.Character:FindFirstChild("Highlight") then
+                     local highlight = Instance.new("Highlight", v.Character)
+                     highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                     highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+                  end
+               end
+               task.wait(1)
+            end
+         end)
+      else
+         for _, v in pairs(game.Players:GetPlayers()) do
+            if v.Character and v.Character:FindFirstChild("Highlight") then
+               v.Character.Highlight:Destroy()
+            end
+         end
+      end
+   end,
+})
+
+VisualsTab:CreateToggle({
+   Name = "Fullbright",
+   CurrentValue = false,
+   Flag = "FullbrightToggle",
+   Callback = function(Value)
+      if Value then
+         game.Lighting.Brightness = 2
+         game.Lighting.ClockTime = 14
+         game.Lighting.GlobalShadows = false
+         game.Lighting.FogEnd = 9e9
+      else
+         game.Lighting.Brightness = 1
+         game.Lighting.ClockTime = 12
+         game.Lighting.GlobalShadows = true
+         game.Lighting.FogEnd = 1000
+      end
+   end,
+})
+
+VisualsTab:CreateSlider({
+   Name = "Field of View",
+   Range = {70, 120},
+   Increment = 1,
+   CurrentValue = 70,
+   Callback = function(v) workspace.CurrentCamera.FieldOfView = v end,
+})
+
+-- Day/Night Toggle
+VisualsTab:CreateButton({
+   Name = "Day/Night",
+   Callback = function()
+      if game.Lighting.ClockTime >= 12 then
+         game.Lighting.ClockTime = 0
+         Rayfield:Notify({Title = "Visuals", Content = "Night set", Duration = 2})
+      else
+         game.Lighting.ClockTime = 12
+         Rayfield:Notify({Title = "Visuals", Content = "Day set", Duration = 2})
+      end
+   end
+})
+
+-- Visual Play Sounds (Boombox)
+VisualsTab:CreateButton({
+   Name = "Visual Play Sounds",
+   Callback = function()
+       loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Boombox-128385"))()
+   end
+})
+
+-- Disco (Local 3D effect, toggle on/off)
+local DiscoEnabled = false
+local DiscoConnections = {}
+local DiscoObjects = {}
+
+VisualsTab:CreateToggle({
+   Name = "Disco",
+   CurrentValue = false,
+   Flag = "DiscoToggle",
+   Callback = function(Value)
+      DiscoEnabled = Value
+      local lp = game.Players.LocalPlayer
+      local char = lp.Character or lp.CharacterAdded:Wait()
+      local hrp = char:WaitForChild("HumanoidRootPart")
+      local lighting = game:GetService("Lighting")
+      
+      if DiscoEnabled then
+         DiscoObjects.originalAmbient = lighting.Ambient
+         DiscoObjects.originalBrightness = lighting.Brightness
+         DiscoObjects.originalColorShift = lighting.ColorShift_Top
+         DiscoObjects.originalFogColor = lighting.FogColor
+         
+         local att = Instance.new("Attachment")
+         att.Name = "DiscoAttachment"
+         att.Parent = hrp
+         DiscoObjects.attachment = att
+         
+         local spotlight = Instance.new("SpotLight")
+         spotlight.Name = "DiscoLight"
+         spotlight.Parent = att
+         spotlight.Range = 100
+         spotlight.Brightness = 5
+         spotlight.Face = Enum.NormalId.Front
+         DiscoObjects.spotlight = spotlight
+         
+         local particleEmitter = Instance.new("ParticleEmitter")
+         particleEmitter.Name = "DiscoParticles"
+         particleEmitter.Parent = att
+         particleEmitter.Rate = 20
+         particleEmitter.Lifetime = NumberRange.new(3)
+         particleEmitter.SpreadAngle = Vector2.new(180, 180)
+         particleEmitter.VelocityInheritance = 0
+         particleEmitter.Texture = "rbxasset://textures/particles/sparkle_main.dds"
+         DiscoObjects.particleEmitter = particleEmitter
+         
+         local hue = 0
+         DiscoConnections.Heartbeat = game:GetService("RunService").Heartbeat:Connect(function()
+            if not DiscoEnabled then return end
+            hue = (hue + 0.005) % 1
+            local color = Color3.fromHSV(hue, 1, 1)
+            
+            if DiscoObjects.spotlight then
+               DiscoObjects.spotlight.Color = color
+            end
+            
+            if DiscoObjects.particleEmitter then
+               DiscoObjects.particleEmitter.Color = ColorSequence.new(color)
+            end
+            
+            lighting.Ambient = color
+            lighting.Brightness = 2
+            lighting.ColorShift_Top = color
+            lighting.FogColor = color
+         end)
+         
+         Rayfield:Notify({Title = "Disco", Content = "Disco ON (only you can see)", Duration = 3})
+      else
+         if DiscoConnections.Heartbeat then
+            DiscoConnections.Heartbeat:Disconnect()
+            DiscoConnections.Heartbeat = nil
+         end
+         
+         if DiscoObjects.attachment then
+            DiscoObjects.attachment:Destroy()
+         end
+         
+         if DiscoObjects.originalAmbient then
+            lighting.Ambient = DiscoObjects.originalAmbient
+            lighting.Brightness = DiscoObjects.originalBrightness
+            lighting.ColorShift_Top = DiscoObjects.originalColorShift
+            lighting.FogColor = DiscoObjects.originalFogColor
+         end
+         
+         DiscoObjects = {}
+         Rayfield:Notify({Title = "Disco", Content = "Disco OFF", Duration = 3})
+      end
+   end,
+})
+
+-- Вкладка: FPS BOOST
+local FpsBoostTab = Window:CreateTab("FPS BOOST", 4483362458)
+
+local LightFPSBoostEnabled = false
+local lightOriginalSettings = {}
+
+FpsBoostTab:CreateToggle({
+   Name = "FPS BOOST (Light)",
+   CurrentValue = false,
+   Flag = "LightFPSBoostToggle",
+   Callback = function(Value)
+      LightFPSBoostEnabled = Value
+      if LightFPSBoostEnabled then
+         lightOriginalSettings = {
+            GraphicsLevel = settings().Rendering.QualityLevel,
+            Brightness = game.Lighting.Brightness,
+            GlobalShadows = game.Lighting.GlobalShadows,
+            FogEnd = game.Lighting.FogEnd
+         }
+         settings().Rendering.QualityLevel = 1
+         game.Lighting.Brightness = 2
+         game.Lighting.GlobalShadows = false
+         game.Lighting.FogEnd = 9e9
+         game.Lighting.ClockTime = 12
+         Rayfield:Notify({Title = "FPS BOOST", Content = "Light FPS boost activated", Duration = 3})
+      else
+         settings().Rendering.QualityLevel = lightOriginalSettings.GraphicsLevel or 3
+         game.Lighting.Brightness = lightOriginalSettings.Brightness or 1
+         game.Lighting.GlobalShadows = lightOriginalSettings.GlobalShadows or true
+         game.Lighting.FogEnd = lightOriginalSettings.FogEnd or 1000
+         game.Lighting.ClockTime = 12
+         Rayfield:Notify({Title = "FPS BOOST", Content = "Light FPS boost deactivated", Duration = 3})
+      end
+   end,
+})
+
+local MaxFPSBoostEnabled = false
+local maxOriginalSettings = {}
+
+FpsBoostTab:CreateToggle({
+   Name = "MAX FPS BOOST",
+   CurrentValue = false,
+   Flag = "MaxFPSBoostToggle",
+   Callback = function(Value)
+      MaxFPSBoostEnabled = Value
+      if MaxFPSBoostEnabled then
+         maxOriginalSettings = {
+            GraphicsLevel = settings().Rendering.QualityLevel,
+            Brightness = game.Lighting.Brightness,
+            GlobalShadows = game.Lighting.GlobalShadows,
+            FogEnd = game.Lighting.FogEnd
+         }
+         settings().Rendering.QualityLevel = 1
+         game.Lighting.Brightness = 2
+         game.Lighting.GlobalShadows = false
+         game.Lighting.FogEnd = 9e9
+         game.Lighting.ClockTime = 12
+         
+         for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") and not v.Parent:FindFirstChild("Humanoid") then
+               if v.Name:lower():match("grass") or v.Name:lower():match("bush") or v.Name:lower():match("tree") or v.Name:lower():match("plant") or v.Name:lower():match("flower") then
+                  v.Transparency = 1
+               end
+            end
+         end
+         
+         for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
+               v.Enabled = false
+            end
+         end
+         
+         for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") and not v:FindFirstChild("OriginalMaterial") then
+               local om = Instance.new("StringValue", v)
+               om.Name = "OriginalMaterial"
+               om.Value = tostring(v.Material)
+               v.Material = Enum.Material.SmoothPlastic
+            end
+         end
+         Rayfield:Notify({Title = "FPS BOOST", Content = "MAX FPS BOOST activated", Duration = 3})
+      else
+         settings().Rendering.QualityLevel = maxOriginalSettings.GraphicsLevel or 3
+         game.Lighting.Brightness = maxOriginalSettings.Brightness or 1
+         game.Lighting.GlobalShadows = maxOriginalSettings.GlobalShadows or true
+         game.Lighting.FogEnd = maxOriginalSettings.FogEnd or 1000
+         game.Lighting.ClockTime = 12
+         
+         for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v:FindFirstChild("OriginalMaterial") then
+               v.Material = Enum.Material[v.OriginalMaterial.Value]
+               v.OriginalMaterial:Destroy()
+            end
+         end
+         
+         for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") or v:IsA("Sparkles") then
+               v.Enabled = true
+            end
+         end
+         
+         for _, v in pairs(workspace:GetDescendants()) do
+            if v:IsA("BasePart") and v.Transparency == 1 then
+               v.Transparency = 0
+            end
+         end
+         Rayfield:Notify({Title = "FPS BOOST", Content = "MAX FPS BOOST deactivated", Duration = 3})
+      end
+   end,
+})
+
+-- Вкладка: Server
+local ServerTab = Window:CreateTab("Server", 4483362458)
+
+ServerTab:CreateButton({
+   Name = "Rejoin",
+   Callback = function()
+      local ts = game:GetService("TeleportService")
+      local p = game:GetService("Players").LocalPlayer
+      ts:Teleport(game.PlaceId, p)
+   end,
+})
+
+ServerTab:CreateButton({
+   Name = "Small Server",
+   Callback = function()
+      local HttpService = game:GetService("HttpService")
+      local placeId = game.PlaceId
+      
+      local success, response = pcall(function()
+         return game:HttpGet("https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?limit=100")
+      end)
+      
+      if success then
+         local data = HttpService:JSONDecode(response)
+         local smallServers = {}
+         
+         for _, server in pairs(data.data) do
+            if server.playing < 10 and server.playing > 0 then
+               table.insert(smallServers, server.id)
+            end
+         end
+         
+         if #smallServers > 0 then
+            local targetServer = smallServers[math.random(1, #smallServers)]
+            game:GetService("TeleportService"):TeleportToPlaceInstance(placeId, targetServer, game.Players.LocalPlayer)
+         else
+            Rayfield:Notify({Title = "Server", Content = "No small servers found", Duration = 3})
+         end
+      else
+         Rayfield:Notify({Title = "Server", Content = "Failed to fetch servers", Duration = 3})
+      end
+   end,
+})
+
+ServerTab:CreateButton({
+   Name = "Serverhop",
+   Callback = function()
+      local HttpService = game:GetService("HttpService")
+      local placeId = game.PlaceId
+      
+      local success, response = pcall(function()
+         return game:HttpGet("https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?limit=100")
+      end)
+      
+      if success then
+         local data = HttpService:JSONDecode(response)
+         local servers = {}
+         
+         for _, server in pairs(data.data) do
+            if server.playing < server.maxPlayers then
+               table.insert(servers, server.id)
+            end
+         end
+         
+         if #servers > 0 then
+            local targetServer = servers[math.random(1, #servers)]
+            game:GetService("TeleportService"):TeleportToPlaceInstance(placeId, targetServer, game.Players.LocalPlayer)
+         else
+            Rayfield:Notify({Title = "Server", Content = "No servers available", Duration = 3})
+         end
+      else
+         Rayfield:Notify({Title = "Server", Content = "Failed to fetch servers", Duration = 3})
+      end
+   end,
+})
+
+-- Вкладка: Executors
+local ExecutorsTab = Window:CreateTab("Executors", 4483362458)
+
+ExecutorsTab:CreateButton({
+   Name = "c00lkidd Executor",
+   Callback = function()
+       loadstring(game:HttpGet("https://gist.githubusercontent.com/maks1165/da1a92ce2b6515344a886f6307b32b0f/raw/6057929b7aaaf89059a6a00334619f5e834e5a77/c00lgui%2520Executor"))()
+   end
+})
+
+ExecutorsTab:CreateButton({
+   Name = "RC7 Executor",
+   Callback = function()
+       loadstring(game:HttpGet("https://gist.githubusercontent.com/maks1165/1545aa55fbb987ef67722212b0fbae91/raw/94f7e53c56ca0b2ee2470d5e6b46b14879fe68a4/RC7"))()
+   end
+})
+
+ExecutorsTab:CreateButton({
+   Name = "krnl Executor",
+   Callback = function()
+       loadstring(game:HttpGet("https://raw.githubusercontent.com/ImHim800/Krnl-old-recreation/refs/heads/main/Krnl%20old%20recreation"))()
+   end
+})
+
+-- Вкладки Admin и Scripts
+local AdminTab = Window:CreateTab("Admin&Exploits", 4483362458)
+AdminTab:CreateButton({Name = "Infinite Yield", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source", true))() end})
+AdminTab:CreateButton({Name = "Nameless Admin", Callback = function() loadstring(game:HttpGet('https://raw.githubusercontent.com/FilteringEnabled/NamelessAdmin/main/Source'))() end})
+AdminTab:CreateButton({Name = "Exploit infinite blox v7", Callback = function() loadstring(game:HttpGet("https://gist.githubusercontent.com/prostomaksim1826-alt/48b5276a775faaa58ce73fed5c0caee1/raw/5e9a3cf6b1bd2a90b52cb812fe927bf3cb39ae2d/gistfile1.txt"))() end})
+AdminTab:CreateButton({Name = "QuirkyCMD Admin", Callback = function() loadstring(game:HttpGet("https://gist.github.com/someunknowndude/38cecea5be9d75cb743eac8b1eaf6758/raw"))() end})
+
+local ScriptsTab = Window:CreateTab("Scripts", 4483362458)
+ScriptsTab:CreateButton({Name = "Emotes TikTok", Callback = function() loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-TIKTOK-Emote-Gui-Script-48411"))() end})
+ScriptsTab:CreateButton({Name = "All Emotes & Animations", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/7yd7/Hub/refs/heads/Branch/GUIS/Emotes.lua"))() end})
+ScriptsTab:CreateButton({Name = "Fling GUI", Callback = function() loadstring(game:HttpGet("https://gist.githubusercontent.com/prostomaksim1826-alt/20d2ce820d716702ee16802c602a6951/raw/0df3f6d2f6f473f11d8619716336c3d7ff233d37/gistfile1.txt"))() end})
+ScriptsTab:CreateButton({Name = "Invisible GUI", Callback = function() loadstring(game:HttpGet("https://gist.githubusercontent.com/maks1165/b49e0fd87fc998e138433aaa1e854111/raw/760f4c82d8e3425f48512f14e8a52bfd359ac1d3/Invisible"))() end})
+
+Rayfield:Notify({Title = "FG9I_0 CRIMINAL", Content = "Kill Aura & Combat protocols engaged.", Duration = 5})
+

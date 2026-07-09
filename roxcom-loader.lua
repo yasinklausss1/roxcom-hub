@@ -877,8 +877,6 @@ do
 	Rayfield.Main.Search.Shadow.Image = customAssets[tostring(5587865193)]
 	Rayfield.Notifications.Template.Icon.Image = customAssets[tostring(77891951053543)]
 	Rayfield.Notifications.Template.Shadow.Image = customAssets[tostring(3523728077)]
-	Rayfield.Loading.Banner.Image = customAssets[tostring(111263549366178)]
-
 end -- custom asset block
 
 local minSize = Vector2.new(1024, 768)
